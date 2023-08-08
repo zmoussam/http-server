@@ -6,7 +6,7 @@
 /*   By: zmoussam <zmoussam@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/05 21:29:36 by zmoussam          #+#    #+#             */
-/*   Updated: 2023/08/07 20:05:38 by zmoussam         ###   ########.fr       */
+/*   Updated: 2023/08/08 00:58:35 by zmoussam         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@
             void getMethod(size_t &methodPos);
             void getURL(size_t &URL_Pos);
             void getHTTPversion(size_t &httpVersion_pos);
-            void getHeader();
+            void getHeader(size_t &header_pos);
             void getBody();
     };
     

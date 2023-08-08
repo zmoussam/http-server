@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   request.cpp                                        :+:      :+:    :+:   */
+/*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: zmoussam <zmoussam@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/05 21:46:08 by zmoussam          #+#    #+#             */
-/*   Updated: 2023/08/07 21:17:13 by zmoussam         ###   ########.fr       */
+/*   Updated: 2023/08/08 00:58:13 by zmoussam         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@ void Request::parsseRequest()
     std::cout << "next : " << nextPos << std::endl;
     getURL(nextPos);
     getHTTPversion(nextPos);
-    getHeader();
+    getHeader(nextPos);
     // getBody();
 }
 
@@ -61,6 +61,11 @@ void Request::getHTTPversion(size_t &_httpversion_Pos)
        && this->_buffer[_httpversion_Pos] != '\r'; _httpversion_Pos++)
         this->_httpVersion += this->_buffer[_httpversion_Pos];
     // std::cout << "http : " << this->_httpVersion << std::endl;
+}
+
+void Request::getHeader()
+{
+
 }
 
 Request::~Request()
