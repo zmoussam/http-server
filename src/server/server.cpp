@@ -6,12 +6,12 @@
 /*   By: zmoussam <zmoussam@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/05 17:38:52 by zmoussam          #+#    #+#             */
-/*   Updated: 2023/08/11 14:55:32 by zmoussam         ###   ########.fr       */
+/*   Updated: 2023/08/11 22:10:40 by zmoussam         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../../inc/Server.hpp"
-#include "../../inc/Request.hpp"
+#include "Server.hpp"
+#include "Request.hpp"
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <errno.h>

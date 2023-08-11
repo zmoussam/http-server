@@ -6,7 +6,7 @@
 /*   By: zmoussam <zmoussam@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/05 21:29:36 by zmoussam          #+#    #+#             */
-/*   Updated: 2023/08/11 18:37:19 by zmoussam         ###   ########.fr       */
+/*   Updated: 2023/08/11 22:25:36 by zmoussam         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,20 +26,30 @@
             std::string _body;
             std::string _path;
             std::string _method;
-            std::string _querys;
-            int _keepAlive;
-            std::map<std::string, std::string> _header;
+            std::string _queries;
+            std::map<std::string, std::string> _headers;
             std::map<std::string , std::string> _cookies;
+            bool _keepAlive;
         public:
+            std::string getFullRequest() const;
+            size_t getRequestLength() const;
+            std::string getBody() const;
+            std::string getHTTPVersion() const;
+            std::string getPath() const;
+            std::string getMethod() const;
+            std::string getQueries() const;
+            bool KeepAlive() const;
+            std::map<std::string, std::string> getHeaders() const;
+            std::map<std::string, std::string> getCookies() const;
+            void parsseRequest();
+            void parsseMethod(size_t &methodPos);
+            void parssePath_Queries(size_t &URL_Pos);
+            void parsseHTTPversion(size_t &httpVersion_pos);
+            void parsseHeaders(size_t &header_pos);
+            void parsseBody(size_t &bodyPos);
+            void parsseCookies();
             Request(int client_socket);
             ~Request();
-            void parsseRequest();
-            void getMethod(size_t &methodPos);
-            void getPath_Querys(size_t &URL_Pos);
-            void getHTTPversion(size_t &httpVersion_pos);
-            void getHeader_body(size_t &header_pos);
-            void getBody(size_t &bodyPos);
-            void getCookies();
     };
     
 #endif

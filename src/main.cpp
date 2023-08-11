@@ -6,11 +6,11 @@
 /*   By: zmoussam <zmoussam@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/05 19:30:26 by zmoussam          #+#    #+#             */
-/*   Updated: 2023/08/05 21:29:15 by zmoussam         ###   ########.fr       */
+/*   Updated: 2023/08/11 22:10:53 by zmoussam         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../inc/Server.hpp"
+#include "Server.hpp"
 
 int main()
 {
