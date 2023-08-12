@@ -21,9 +21,9 @@ std::string Request::getHTTPVersion() const
     return this->_httpVersion;
 }
 
-std::string Request::getPath() const
+std::string Request::getURI() const
 {
-    return this->_path;
+    return this->_URI;
 }
 
 std::string Request::getMethod() const

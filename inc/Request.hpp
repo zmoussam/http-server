@@ -6,7 +6,7 @@
 /*   By: zmoussam <zmoussam@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/05 21:29:36 by zmoussam          #+#    #+#             */
-/*   Updated: 2023/08/11 22:25:36 by zmoussam         ###   ########.fr       */
+/*   Updated: 2023/08/12 18:12:37 by zmoussam         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@
             size_t bufferLength;
             std::string _httpVersion;
             std::string _body;
-            std::string _path;
+            std::string _URI;
             std::string _method;
             std::string _queries;
             std::map<std::string, std::string> _headers;
@@ -35,15 +35,16 @@
             size_t getRequestLength() const;
             std::string getBody() const;
             std::string getHTTPVersion() const;
-            std::string getPath() const;
+            std::string getURI() const;
             std::string getMethod() const;
             std::string getQueries() const;
             bool KeepAlive() const;
             std::map<std::string, std::string> getHeaders() const;
             std::map<std::string, std::string> getCookies() const;
+            void readRequest(int client_socket);
             void parsseRequest();
             void parsseMethod(size_t &methodPos);
-            void parssePath_Queries(size_t &URL_Pos);
+            void parssePath_Queries(size_t &URI_Pos);
             void parsseHTTPversion(size_t &httpVersion_pos);
             void parsseHeaders(size_t &header_pos);
             void parsseBody(size_t &bodyPos);

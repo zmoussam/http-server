@@ -6,12 +6,13 @@
 /*   By: zmoussam <zmoussam@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/05 17:38:52 by zmoussam          #+#    #+#             */
-/*   Updated: 2023/08/11 22:10:40 by zmoussam         ###   ########.fr       */
+/*   Updated: 2023/08/12 18:15:58 by zmoussam         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 #include "Request.hpp"
+#include "Response.hpp"
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <errno.h>
@@ -47,6 +48,7 @@ server::server(const short _Port)
     }
 }
 
+
 void server::start() const
 {
     int client_socket = -1;
@@ -65,8 +67,10 @@ void server::start() const
             std::cout << "Error : can't accept connection \n- " << strerror(errno) << std::endl;
             continue;
         }
+        // readRequest(client_socket);
         Request _request(client_socket);
         _request.parsseRequest();
+        // Response res(client_socket);
         close(client_socket);
     }
 }
