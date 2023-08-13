@@ -1,31 +1,34 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   server.hpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: zmoussam <zmoussam@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/08/05 17:39:27 by zmoussam          #+#    #+#             */
-/*   Updated: 2023/08/05 19:29:24 by zmoussam         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
+# pragma once
 
-#ifndef SERVER__
-#define SERVER__
 #include <iostream>
-#include <string>
+#include <cstring>
+#include <sys/socket.h>
 #include <netinet/in.h>
-    class server
-    {
-        private:
-            int _serverSocket;
-            struct  sockaddr_in address;
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <ctime>
+#include <sstream>
 
-        public:
-            server(const short _Port);
-            ~server();
-            void start() const;
-            
-    };
 
-#endif     
+#include "Request.hpp"
+#include "Response.hpp"
+#include "Utils.hpp"
+#include "Macros.hpp"
+
+class Server {
+	private:
+		int _port;
+		int _serverSocket;
+		struct sockaddr_in _serverAddress;
+	
+	public:
+		Server(int port);
+		~Server();
+
+		void setPort(int port);
+
+		const std::string& getAddress() const;
+		int getPort() const;
+
+		int start();
+};

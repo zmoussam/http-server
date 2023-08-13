@@ -1,19 +1,7 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   main.cpp                                           :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: zmoussam <zmoussam@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/08/05 19:30:26 by zmoussam          #+#    #+#             */
-/*   Updated: 2023/08/11 22:10:53 by zmoussam         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
+# include "Server.hpp"
 
-#include "Server.hpp"
-
-int main()
-{
-    server webserv(8080);
-    webserv.start();
+int main(void) {
+    Server server(8000);
+    int err = server.start();
+    std::cout << "err: " << err << std::endl;
 }

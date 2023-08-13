@@ -3,12 +3,12 @@
 
 std::string Request::getFullRequest() const
 {
-    return this->_buffer;
+    return this->_request;
 }
 
 size_t Request::getRequestLength() const
 {
-    return this->bufferLength;
+    return this->_requestLength;
 }
 
 std::string Request::getBody() const
@@ -21,7 +21,7 @@ std::string Request::getHTTPVersion() const
     return this->_httpVersion;
 }
 
-std::string Request::getURI() const
+std::string Request::getPath() const
 {
     return this->_URI;
 }
@@ -49,4 +49,8 @@ std::map<std::string, std::string> Request::getHeaders() const
 std::map<std::string, std::string> Request::getCookies() const
 {
     return this->_cookies;
+}
+
+bool Request::isHeadersRead() const {
+	return _isHeadersRead;
 }

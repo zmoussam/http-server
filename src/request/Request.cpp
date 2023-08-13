@@ -6,17 +6,54 @@
 /*   By: zmoussam <zmoussam@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/05 21:46:08 by zmoussam          #+#    #+#             */
-/*   Updated: 2023/08/12 19:35:10 by zmoussam         ###   ########.fr       */
+/*   Updated: 2023/08/13 19:35:40 by zmoussam         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Request.hpp"
+#include "Macros.hpp"
 #include <sys/socket.h>
 #include <sstream>
 
+int Request::recvRequest() {
+	char buffer[1024];
+	int readRes = recv(_clientSocket, buffer, sizeof(buffer), 0);
+	if (readRes == -1) {
+		std::cerr << "Error: recv() failed" << std::endl;
+		return DONE;
+	}
+	else if (readRes == 0) {
+		std::cout << "Client disconnected" << std::endl;
+		return DISCONNECTED;
+	}
+	buffer[readRes] = '\0';
+	_request += buffer;
+	if (_request.find("\r\n\r\n") != std::string::npos && !_isHeadersRead) {
+		_isHeadersRead = 1;
+        _requestLength = _request.size();
+		return DONE;
+	}
+	return (0);
+}
+
+// Handle the request received on the provided client socket
+int Request::handleRequest() {
+	// Receive the request from the client
+	int rcvRes = recvRequest();
+	if (rcvRes == DISCONNECTED) {
+		return DISCONNECTED;
+	}
+
+		if (rcvRes == DONE && _isHeadersRead) {
+			parsseRequest();
+		}
+	// std::cout << " - - " << "\"" << _method << " " << _path << " " << _protocol << "\" "  << std::endl;
+	return (0);
+}
+
 Request::Request(int clientSocket) 	: 
-	_buffer(""),
-    bufferLength(0),
+	_request(""),
+    _requestLength(0),
     _httpVersion(""),
 	_body(""),
 	_URI(""),
@@ -24,30 +61,51 @@ Request::Request(int clientSocket) 	:
 	_queries(),
 	_headers(),
 	_cookies(),
-	_keepAlive(1)
+	_keepAlive(1),
+	_isHeadersRead(false),
+    _clientSocket(clientSocket)
 {
-    readRequest(clientSocket);
-    bufferLength = _buffer.size();
-    
 }
 
-void Request::readRequest(int client_socket)
+Request::Request() :
+    _request(""),
+    _requestLength(0),
+    _httpVersion(""),
+    _body(""),
+    _URI(""),
+    _method(""),
+    _queries(),
+    _headers(),
+    _cookies(),
+    _keepAlive(1),
+    _isHeadersRead(false),
+    _clientSocket(-1)
 {
-    char buffer[11];
-    int rd = 1;
-    while (rd != 0)
-    {
-        rd = recv(client_socket, buffer, 10, 0);
-        if (rd < 0)
-        {
-            std::cout << "Error : recieve request failed \n" << strerror(errno) << std::endl;
-            return;
-        }
-        buffer[rd] = '\0';
-        _buffer += std::string(buffer);
-    }
-    // std::cout << _buffer << std::endl;
 }
+
+// void Request::readRequest(int client_socket)
+// {
+//     char buffer[11];
+//     int rd = 1;
+    
+//     while (rd != 0)
+//     {
+//         memset(buffer, 0, 11);
+//         rd = recv(client_socket, buffer, 10, 0);
+//         if (rd < 0)
+//         {
+//             std::cout << "Error : recieve request failed \n" << strerror(errno) << std::endl;
+//             return;
+//         }
+//         buffer[rd] = '\0';
+//         _request += std::string(buffer);
+//         if (_request.find("\r\n\r\n") != std::string::npos)
+//             break;
+//     }
+    
+//     _requestLength = _request.size();
+//     // std::cout << _request << std::endl;
+// }
 
 void Request::parsseRequest()
 {
@@ -58,22 +116,22 @@ void Request::parsseRequest()
     parsseHeaders(nextPos);
     parsseBody(nextPos);
     parsseCookies();
+
 }
 
 void Request::parsseMethod(size_t &methodPos)
 {
-    _method = "";
-    for (; methodPos < bufferLength && _buffer[methodPos] != ' '; methodPos++)
-        _method += _buffer[methodPos];
+    for (; methodPos < _requestLength && _request[methodPos] != ' '; methodPos++)
+        _method += _request[methodPos];
 }
 
 void Request::parssePath_Queries(size_t &URI_Pos)
 {
     std::string URI = "";
     size_t queryPos;
-    for (; URI_Pos < bufferLength && _buffer[URI_Pos] == ' '; URI_Pos++);
-    for (; URI_Pos < bufferLength && _buffer[URI_Pos] != ' '; URI_Pos++)
-        URI += _buffer[URI_Pos];
+    for (; URI_Pos < _requestLength && _request[URI_Pos] == ' '; URI_Pos++);
+    for (; URI_Pos < _requestLength && _request[URI_Pos] != ' '; URI_Pos++)
+        URI += _request[URI_Pos];
     queryPos = URI.find('?');
     if (queryPos != std::string::npos)
     {
@@ -87,11 +145,10 @@ void Request::parssePath_Queries(size_t &URI_Pos)
 
 void Request::parsseHTTPversion(size_t &_httpversion_Pos)
 {
-    _httpVersion = "";
-    for (; _httpversion_Pos < bufferLength && _buffer[_httpversion_Pos] == ' '; _httpversion_Pos++);
-    for (; _httpversion_Pos < bufferLength && _buffer[_httpversion_Pos] != ' ' \
-       && _buffer[_httpversion_Pos] != '\r'; _httpversion_Pos++)
-        _httpVersion += _buffer[_httpversion_Pos];
+    for (; _httpversion_Pos < _requestLength && _request[_httpversion_Pos] == ' '; _httpversion_Pos++);
+    for (; _httpversion_Pos < _requestLength && _request[_httpversion_Pos] != ' ' \
+       && _request[_httpversion_Pos] != '\r'; _httpversion_Pos++)
+        _httpVersion += _request[_httpversion_Pos];
 }
 
 void Request::parsseHeaders(size_t &_hpos)
@@ -100,21 +157,22 @@ void Request::parsseHeaders(size_t &_hpos)
     size_t _headerkeyPos;
     size_t _headerValuePos;
     _keepAlive = false;
-    size_t bodypos = _buffer.find("\r\n\r\n", _hpos);
+    size_t bodypos = _request.find("\r\n\r\n", _hpos);
     if (bodypos == std::string::npos)
         return;
     while (_hpos < bodypos)
     {
-        _headerkeyPos = _buffer.find(':', _hpos);
+        _headerkeyPos = _request.find(':', _hpos);
         if (_headerkeyPos == std::string::npos)
             break;
-        _key = _buffer.substr(_hpos + 2, _headerkeyPos - _hpos - 2);
-        _headerValuePos = _buffer.find("\r\n", _headerkeyPos);
-        _headers[_key] = _buffer.substr(_headerkeyPos + 2, _headerValuePos - _headerkeyPos - 2);
+        _key = _request.substr(_hpos + 2, _headerkeyPos - _hpos - 2);
+        if ((_headerValuePos = _request.find("\r\n", _headerkeyPos)) == std::string::npos)
+            return;
+        _headers[_key] = _request.substr(_headerkeyPos + 2, _headerValuePos - _headerkeyPos - 2);
         if (_key == "Connection" && _headers[_key] == "keep-alive")
             _keepAlive = true;
         _hpos = _headerValuePos;
-        std::cout << '$' << _key << "$ : " << '$' << this->_headers[_key]  << "$" << std::endl;
+        // std::cout << '$' << _key << "$ : " << '$' << this->_headers[_key]  << "$" << std::endl;
     }
 }
 
@@ -145,12 +203,9 @@ void Request::parsseCookies()
 
 void Request::parsseBody(size_t &_bodyPos)
 {
-    _body = "";
-    if (_bodyPos == std::string::npos)
-        return;
-    if (_bodyPos + 4 < bufferLength - 1)
-        _body = _buffer.substr(_bodyPos  + 4);
-    std::cout << _body.size() << "  \n" <<  _body << std::endl;
+    if (_headers.find("Content-Length") != _headers.end())
+        _body = _request.substr(_bodyPos + 4 , std::atoi(_headers["Content-Length"].c_str()));
+    std::cout <<  _body << std::endl;
 }
 
 Request::~Request()
