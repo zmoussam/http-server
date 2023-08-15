@@ -6,18 +6,16 @@
 /*   By: zmoussam <zmoussam@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/05 21:46:08 by zmoussam          #+#    #+#             */
-/*   Updated: 2023/08/13 19:35:40 by zmoussam         ###   ########.fr       */
+/*   Updated: 2023/08/15 22:10:34 by zmoussam         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Request.hpp"
-#include "Macros.hpp"
-#include <sys/socket.h>
-#include <sstream>
 
 int Request::recvRequest() {
 	char buffer[1024];
-	int readRes = recv(_clientSocket, buffer, sizeof(buffer), 0);
+    size_t headerlength = 0;
+	int readRes = recv(_clientSocket, buffer, 1023, 0);
 	if (readRes == -1) {
 		std::cerr << "Error: recv() failed" << std::endl;
 		return DONE;
@@ -28,14 +26,41 @@ int Request::recvRequest() {
 	}
 	buffer[readRes] = '\0';
 	_request += buffer;
-	if (_request.find("\r\n\r\n") != std::string::npos && !_isHeadersRead) {
-		_isHeadersRead = 1;
-        _requestLength = _request.size();
-		return DONE;
+    headerlength = _request.find("\r\n\r\n");
+	if (headerlength != std::string::npos && !_isBodyRead) {
+		_isHeadersRead = true;
+        size_t bodyLengthPos = _request.find("Content-Length");
+        if (bodyLengthPos != std::string::npos)
+        {
+            size_t bodyLength = getBodyLength(_request.substr(bodyLengthPos + 16, _request.find("\r\n", bodyLengthPos + 16) - bodyLengthPos - 16));
+            std::cout << "bodyLength : " << bodyLength << std::endl;
+            std::cout << "requestLength : " << _request.substr(headerlength + 4).size() << std::endl;
+            if (_request.substr(headerlength + 4).size() == bodyLength)
+            {
+                _isBodyRead = true;
+                _requestLength = _request.size();
+                return DONE;
+            }
+        }
+        else if (_request.find("Transfer-Encoding: chunked") != std::string::npos)
+        {
+            size_t chunkedBodyLength = getChunkedBodyLength(_request.substr(headerlength + 4));
+            if (chunkedBodyLength != 0)
+            {
+                _isBodyRead = true;
+                _requestLength = _request.size();
+                return DONE;
+            }
+        }
+        else
+        {
+            _isBodyRead = true;
+            _requestLength = _request.size();
+            return DONE;
+        }
 	}
 	return (0);
 }
-
 // Handle the request received on the provided client socket
 int Request::handleRequest() {
 	// Receive the request from the client
@@ -43,11 +68,11 @@ int Request::handleRequest() {
 	if (rcvRes == DISCONNECTED) {
 		return DISCONNECTED;
 	}
-
-		if (rcvRes == DONE && _isHeadersRead) {
-			parsseRequest();
-		}
-	// std::cout << " - - " << "\"" << _method << " " << _path << " " << _protocol << "\" "  << std::endl;
+	if (rcvRes == DONE && _isHeadersRead ) {
+		parsseRequest();
+	    // std::cout << " - - " << "\"" << _method << " " << _URI << " " << _httpVersion << "\"" << std::endl;
+        std::cout << _request << std::endl;
+	}
 	return (0);
 }
 
@@ -63,7 +88,8 @@ Request::Request(int clientSocket) 	:
 	_cookies(),
 	_keepAlive(1),
 	_isHeadersRead(false),
-    _clientSocket(clientSocket)
+    _clientSocket(clientSocket),
+    _isBodyRead(false)
 {
 }
 
@@ -79,33 +105,10 @@ Request::Request() :
     _cookies(),
     _keepAlive(1),
     _isHeadersRead(false),
-    _clientSocket(-1)
+    _clientSocket(-1),
+     _isBodyRead(false)
 {
 }
-
-// void Request::readRequest(int client_socket)
-// {
-//     char buffer[11];
-//     int rd = 1;
-    
-//     while (rd != 0)
-//     {
-//         memset(buffer, 0, 11);
-//         rd = recv(client_socket, buffer, 10, 0);
-//         if (rd < 0)
-//         {
-//             std::cout << "Error : recieve request failed \n" << strerror(errno) << std::endl;
-//             return;
-//         }
-//         buffer[rd] = '\0';
-//         _request += std::string(buffer);
-//         if (_request.find("\r\n\r\n") != std::string::npos)
-//             break;
-//     }
-    
-//     _requestLength = _request.size();
-//     // std::cout << _request << std::endl;
-// }
 
 void Request::parsseRequest()
 {
@@ -205,7 +208,7 @@ void Request::parsseBody(size_t &_bodyPos)
 {
     if (_headers.find("Content-Length") != _headers.end())
         _body = _request.substr(_bodyPos + 4 , std::atoi(_headers["Content-Length"].c_str()));
-    std::cout <<  _body << std::endl;
+    std::cout << _body << std::endl;
 }
 
 Request::~Request()

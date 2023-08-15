@@ -54,3 +54,19 @@ std::map<std::string, std::string> Request::getCookies() const
 bool Request::isHeadersRead() const {
 	return _isHeadersRead;
 }
+
+bool Request::isBodyRead() const {
+	return _isBodyRead;
+}
+
+size_t getBodyLength(std::string Content_length)
+{
+    std::string bodylength = "";
+    int i = 0;
+    while (Content_length[i] != '\r' && std::isdigit(Content_length[i]))
+    {
+        bodylength += Content_length[i];
+        i++;
+    }
+    return std::atoi(bodylength.c_str());
+}

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: aarbaoui <aarbaoui@student.1337.ma>        +#+  +:+       +#+        */
+/*   By: zmoussam <zmoussam@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/13 18:46:40 by zmoussam          #+#    #+#             */
-/*   Updated: 2023/08/13 19:07:37 by aarbaoui         ###   ########.fr       */
+/*   Updated: 2023/08/15 21:08:01 by zmoussam         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,8 +15,10 @@
 #include <iostream>
 #include <string>
 #include <map>
-#define BUFFER_SIZE 3000
-
+#include <sys/socket.h>
+#include <sstream>
+#include "Macros.hpp"
+#include "Utils.hpp"
 class Request
 {
     private:
@@ -32,10 +34,12 @@ class Request
         bool _keepAlive;
 		bool _isHeadersRead;
         int _clientSocket;
+        bool _isBodyRead;
     public:
 		int recvRequest();
 		int handleRequest();
 		bool isHeadersRead() const;
+		bool isBodyRead() const;
         std::string getFullRequest() const;
         size_t getRequestLength() const;
         std::string getBody() const;
@@ -58,5 +62,7 @@ class Request
         Request(int clientSocket);
         ~Request();
 };
-    
+
+size_t getBodyLength(std::string Content_length);
+
 #endif
