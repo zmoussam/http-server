@@ -61,6 +61,7 @@ bool Request::isBodyRead() const {
 
 size_t getBodyLength(std::string Content_length)
 {
+    // std::cout << "Content_length: [" << Content_length <<  "]"<< std::endl;
     std::string bodylength = "";
     int i = 0;
     while (Content_length[i] != '\r' && std::isdigit(Content_length[i]))
@@ -69,4 +70,17 @@ size_t getBodyLength(std::string Content_length)
         i++;
     }
     return std::atoi(bodylength.c_str());
+}
+
+int hexStringToInt(const std::string hexString) {
+    std::istringstream converter(hexString);
+    int intValue;
+    converter >> std::hex >> intValue;
+    return intValue;
+}
+
+BoundaryBody::BoundaryBody()
+{
+    this->_boundary = "";
+    this->_bodysCount = 0;
 }
