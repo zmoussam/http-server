@@ -1,6 +1,7 @@
 # include "Response.hpp"
 # include <iostream>
 # include <fcntl.h>
+#include <sys/sendfile.h>
 
 Response::Response()
 	: _protocol(""),
@@ -81,7 +82,7 @@ int Response::sendResp(Request &req) {
         _headersSent = true;
     }
     off_t bytesSent = 1024;
-    int res = sendfile(_fd, _clientSocket, _offset, &bytesSent, NULL, 0);
+    int res = sendfile(_clientSocket, _fd, &_offset, sizeof(_offset));
     if (res == -1 && _offset >= _fileSize) {
         return DONE;
     }

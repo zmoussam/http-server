@@ -3,15 +3,21 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: zmoussam <zmoussam@student.42.fr>          +#+  +:+       +#+        */
+/*   By: zakaria <zakaria@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/05 21:46:08 by zmoussam          #+#    #+#             */
-/*   Updated: 2023/08/18 00:05:46 by zmoussam         ###   ########.fr       */
+/*   Updated: 2023/08/23 22:22:00 by zakaria          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Request.hpp"
+#include <cstdlib> // Include this header for atoi
 
+Request::Request(const Request &copy){
+    if (this != &copy) {
+    *this = copy;
+    }
+}
 int Request::waitForBody(size_t headerlength)
 {
     size_t bodyLengthPos = _REQ.str().find("Content-Length");
@@ -82,7 +88,7 @@ int Request::handleRequest() {
 	if (rcvRes == DONE && _isBodyRead) {
 		parsseRequest();
 	    // std::cout << " - - " << "\"" << _method << " " << _URI << " " << _httpVersion << "\"" << std::endl;
-        // std::cout << _request << std::endl;
+        std::cout << _request << std::endl;
 	}
 	return (0);
 }
@@ -220,41 +226,29 @@ void Request::parsseCookies()
         _headers.erase("Cookies");
     }
 }
+std::string Request::getboundarybody(size_t &nextBody, std::string boundary)
+{
+    std::string body = _body.substr(nextBody, _body.find(boundary, nextBody) - nextBody - 4);
+    nextBody = 
+    return _body.substr(n);
+}
+
 void Request::parsseBody(size_t &_bodyPos)
 {
     if (_headers.find("Content-Length") != _headers.end())
     {
         _body = _request.substr(_bodyPos + 4 , std::atoi(_headers["Content-Length"].c_str()));
-        if(_headers.find("Content-Type") != _headers.end() \
-        && _headers["Content-Type"].find("multipart/form-data") != std::string::npos\
+        if(_headers.find("Content-Type") != _headers.end() 
+        && _headers["Content-Type"].find("multipart/form-data") != std::string::npos
         && _headers["Content-Type"].find("boundary") != std::string::npos)
         {
-            std::map<std::string, std::string> tmp;
-            _checkBoundary = true;
-            std::string boundary;
-            size_t bodyLength = std::atoi(_headers["Content-Length"].c_str());
-            boundary = _headers["Content-Type"].substr(_headers["Content-Type"].find("boundary") + 9);
-            // std::cout << "boundary: " << boundary << std::endl;
-            for (size_t i = 0; i < bodyLength + ; i++)
-            { 
-                size_t nextBodyPos = _request.find(boundary, i);
-                if (nextBodyPos != std::string::npos)
-                {
-                    std::string tmpBody = _request.substr(i,);
-                    size_t headerPos = tmpBody.find("\r\n\r\n");
-                    if (headerPos != std::string::npos)
-                    {
-                        std::string header = tmpBody.substr(0, headerPos);
-                        size_t keyPos = header.find("name=\"");
-                        if (keyPos != std::string::npos)
-                        {
-                            std::string key = header.substr(keyPos + 6);
-                            key = key.substr(0, key.find("\""));
-                            tmp[key] = tmpBody.substr(headerPos + 4);
-                        }
-                    }
-                    i = nextBodyPos + boundary.size() - 1;
-                }
+            size_t nextBody = _body.find("\r\n\r\n");
+            std::string _checkBoundary = "";
+            std::string boundary = _headers["Content-Type"].substr(_headers["Content-Type"].find("boundary=") + 9);
+            while (_checkBoundary != "--" + boundary + "--")
+            {
+                BoundaryBody tmp;
+                tmp._body = getboundarybody(nextBody, boundary);
             }
             
             // Todo : handle the boundary
@@ -280,7 +274,7 @@ void Request::parsseBody(size_t &_bodyPos)
             i += chunkIntValue + 1;
         }
     }
-    std::cout << _body << std::endl;
+    // std::cout << _body << std::endl;
 }
 
 Request::~Request()

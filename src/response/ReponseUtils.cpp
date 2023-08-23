@@ -1,4 +1,5 @@
 # include <string>
+#include <stdexcept> 
 # include "Macros.hpp"
 
 std::string constructFilePath(const std::string& requestPath) {
@@ -6,7 +7,7 @@ std::string constructFilePath(const std::string& requestPath) {
     if (pathWithoutQuery.empty() || pathWithoutQuery[0] != '/') {
         throw std::invalid_argument("Invalid request path");
     }
-    if (pathWithoutQuery.back() == '/') {
+    if (!pathWithoutQuery.empty() && pathWithoutQuery[pathWithoutQuery.size() - 1] == '/'){
         pathWithoutQuery += "index.html";
     }
     // if at the end of the path there is no slash and there is no extension then add /index.html

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: zmoussam <zmoussam@student.42.fr>          +#+  +:+       +#+        */
+/*   By: zakaria <zakaria@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/13 18:46:40 by zmoussam          #+#    #+#             */
-/*   Updated: 2023/08/17 20:09:14 by zmoussam         ###   ########.fr       */
+/*   Updated: 2023/08/23 22:17:19 by zakaria          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,14 +19,15 @@
 #include <sstream>
 #include <list>
 #include <vector>
+#include <cstdlib> 
 #include "Macros.hpp"
 #include "Utils.hpp"
 struct BoundaryBody
 {
     std::map<std::string, std::string> headers;
-    std::vector<std::string> _body;
+    std::string _body;
     std::string _boundary;
-    size_t _bodysCount;
+    // size_t _bodysCount;
     BoundaryBody();
 } ;
 
@@ -41,7 +42,7 @@ class Request
         std::string _URI;
         std::string _method;
         std::string _queries;
-        BoundaryBody _boundaryBody;
+        std::vector<BoundaryBody> _boundaryBody;
         std::map<std::string, std::string> _headers;
         std::map<std::string , std::string> _cookies;
         bool _keepAlive;
@@ -59,6 +60,7 @@ class Request
         std::string getFullRequest() const;
         size_t getRequestLength() const;
         std::string getBody() const;
+        std::string getboundarybody(size_t &nextBody, std::string boundary);
         std::string getHTTPVersion() const;
         std::string getPath() const;
         std::string getMethod() const;
@@ -76,6 +78,7 @@ class Request
         void parsseCookies();
         Request();
         Request(int clientSocket);
+        Request(const Request &copy);
         ~Request();
         Request & operator=(const Request & other) {
             if (this != &other) {
