@@ -1,5 +1,34 @@
 #include "Request.hpp"
 
+Request::Request(const Request & other) {
+    *this = other;
+}
+Request &Request::operator=(const Request & other) {
+    if (this != &other) {
+        this->_REQ.write(other._REQ.str().c_str(), other._REQ.str().size());
+        this->_request = other._request;
+        this->_requestLength = other._requestLength;
+        this->_httpVersion = other._httpVersion;
+        this->_body = other._body;
+        this->_URI = other._URI;
+        this->_method = other._method;
+        this->_queries = other._queries;
+        this->_boundary = other._boundary;
+        this->_boundaryBody = other._boundaryBody;
+        this->_headers = other._headers;
+        this->_cookies = other._cookies;
+        this->_config = other._config;
+        this->_servers = other._servers;
+        this->_bodySize = other._bodySize;
+        this->_error = other._error;
+        this->_keepAlive = other._keepAlive;
+        this->_isHeadersRead = other._isHeadersRead;
+        this->_clientSocket = other._clientSocket;
+        this->_isBodyRead = other._isBodyRead;
+        this->_checkBoundary = other._checkBoundary;
+    }
+    return *this;
+}
 
 std::string Request::getFullRequest() const
 {
@@ -46,10 +75,6 @@ std::map<std::string, std::string> Request::getHeaders() const
     return this->_headers;
 }
 
-std::map<std::string, std::string> Request::getCookies() const
-{
-    return this->_cookies;
-}
 
 bool Request::isHeadersRead() const {
 	return _isHeadersRead;
@@ -59,9 +84,8 @@ bool Request::isBodyRead() const {
 	return _isBodyRead;
 }
 
-size_t getBodyLength(std::string Content_length)
+size_t Request::getBodyLength(std::string Content_length)
 {
-    // std::cout << "Content_length: [" << Content_length <<  "]"<< std::endl;
     std::string bodylength = "";
     int i = 0;
     while (Content_length[i] != '\r' && std::isdigit(Content_length[i]))
@@ -69,7 +93,14 @@ size_t getBodyLength(std::string Content_length)
         bodylength += Content_length[i];
         i++;
     }
-    return std::atoi(bodylength.c_str());
+    std::istringstream converter(bodylength);
+    long long bodyLength;
+    if (converter >> bodyLength)
+        return bodyLength;
+    else {
+        _error = 400;
+        return 0;
+    };
 }
 
 int hexStringToInt(const std::string hexString) {
@@ -77,10 +108,4 @@ int hexStringToInt(const std::string hexString) {
     int intValue;
     converter >> std::hex >> intValue;
     return intValue;
-}
-
-BoundaryBody::BoundaryBody()
-{
-    this->_boundary = "";
-    this->_bodysCount = 0;
 }

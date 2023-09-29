@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: zakaria <zakaria@student.42.fr>            +#+  +:+       +#+        */
+/*   By: zmoussam <zmoussam@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/13 18:46:40 by zmoussam          #+#    #+#             */
-/*   Updated: 2023/08/23 22:17:19 by zakaria          ###   ########.fr       */
+/*   Updated: 2023/09/24 17:38:29 by zmoussam         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,17 +19,18 @@
 #include <sstream>
 #include <list>
 #include <vector>
-#include <cstdlib> 
 #include "Macros.hpp"
 #include "Utils.hpp"
+#include "Config.hpp"
+#include <cstdlib>
 struct BoundaryBody
 {
     std::map<std::string, std::string> headers;
+    std::string filename;
+    bool _isFile;
     std::string _body;
-    std::string _boundary;
-    // size_t _bodysCount;
-    BoundaryBody();
-} ;
+    struct BoundaryBody *next;
+};
 
 class Request
 {
@@ -42,32 +43,42 @@ class Request
         std::string _URI;
         std::string _method;
         std::string _queries;
-        std::vector<BoundaryBody> _boundaryBody;
+        std::string _boundary;
+        BoundaryBody *_boundaryBody;
         std::map<std::string, std::string> _headers;
-        std::map<std::string , std::string> _cookies;
+        std::string _cookies;
+        ServerConf _config;
+        std::vector<ServerConf> _servers;
+        size_t _bodySize;
+        int _error;
         bool _keepAlive;
 		bool _isHeadersRead;
         int _clientSocket;
         bool _isBodyRead;
         bool _checkBoundary;
+        int _port;
     public:
-        // std::string _requestHeaders;
 		int recvRequest();
-		int handleRequest();
+		int handleRequest(int port);
 		bool isHeadersRead() const;
 		bool isBodyRead() const;
         int waitForBody(size_t headerLength);
         std::string getFullRequest() const;
         size_t getRequestLength() const;
         std::string getBody() const;
-        std::string getboundarybody(size_t &nextBody, std::string boundary);
         std::string getHTTPVersion() const;
         std::string getPath() const;
         std::string getMethod() const;
         std::string getQueries() const;
+        size_t getBodyLength(std::string Content_length);
+        std::string getCookies() const {return _cookies;}
+        bool isKeepAlive() const {return _keepAlive;}
+        BoundaryBody *getBoundaryBody() const {return _boundaryBody;}
+        int     getPort() const {return _port;}
         bool KeepAlive() const;
         std::map<std::string, std::string> getHeaders() const;
-        std::map<std::string, std::string> getCookies() const;
+        // std::map<std::string, std::string> getCookies() const;
+        int getError() const {return _error;}
         void readRequest(int client_socket);
         void parsseRequest();
         void parsseMethod(size_t &methodPos);
@@ -75,34 +86,26 @@ class Request
         void parsseHTTPversion(size_t &httpVersion_pos);
         void parsseHeaders(size_t &header_pos);
         void parsseBody(size_t &bodyPos);
+        void getChunkedBody(size_t &_bodyPos);
+        void getBoundaries(size_t &_bodyPos);
+        size_t countboundaries(size_t _bodyPos);
+        void findConfig();
+        void creatUploadFile(BoundaryBody *headBoundaryBody);
+        std::string generateRandomString();
+        std::string getUploadPath();
+        void creatFile(std::string fileName, std::string body);
+        std::string getfileNametodelete();
+        void HandelDeleteMethod();
+        bool isMethodAllowed();
         void parsseCookies();
         Request();
-        Request(int clientSocket);
-        Request(const Request &copy);
+        Request(int clientSocket, std::vector<ServerConf> servers);
+        Request(const Request & other);
+        Request &operator=(const Request & other);
         ~Request();
-        Request & operator=(const Request & other) {
-            if (this != &other) {
-                this->_REQ.str(other._REQ.str());
-                this->_request = other._request;
-                this->_requestLength = other._requestLength;
-                this->_httpVersion = other._httpVersion;
-                this->_body = other._body;
-                this->_URI = other._URI;
-                this->_method = other._method;
-                this->_queries = other._queries;
-                this->_headers = other._headers;
-                this->_cookies = other._cookies;
-                this->_keepAlive = other._keepAlive;
-                this->_isHeadersRead = other._isHeadersRead;
-                this->_clientSocket = other._clientSocket;
-                this->_isBodyRead = other._isBodyRead;
-                this->_checkBoundary = other._checkBoundary;
-            }
-            return *this;
-        }
+
 };
 
-size_t getBodyLength(std::string Content_length);
 int hexStringToInt(const std::string hexString);
 
 #endif

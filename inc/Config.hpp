@@ -9,31 +9,17 @@
 #include <sstream>
 #include <iterator>
 #include <ctype.h>
-#define CONF_FILE "configs/file_config.conf"
-#define NOT_VALID "not a valid line"
-#define FAIL_OPEN "Failed to open the input file."
-#define UNEXPECTED_TOKEN "Unexpected token"
-#define LISTEN "listen"
-#define SERVER_NAME "server_name"
-#define ERROR_PAGE "error_page"
-#define ROOT "root"
-#define LOCATION "location"
-#define AUTO_INDEX "autoindex"
-#define ALLOW_METHODS "allow_methods"
-#define INDEX "index"
-#define HOST "host"
-#define BODY_SIZE "client_body_size"
-#define AUTO_INDEX "autoindex"
-#define REDIRECT "return"
+#include "Macros.hpp"
 
 class ServerConf;
 class Config {
     public:
-        char *_file;
         Config();
-        Config(char *file);
         ~Config();
+        char *_file;
+        Config(char *file);
         std::vector<ServerConf>  _servers;
+        std::map<int , std::vector<ServerConf> > _serversByPort;
 };
 
 class Location;
@@ -47,34 +33,42 @@ class ServerConf {
         bool _autoindex;
         std::string _root;
         std::string _index;
+        std::string _uploadPath;
+        std::vector<std::string> _methods;
         std::map<int , std::string> _errorPages;
+
     public:
         ServerConf();
         ~ServerConf();
-        bool getAutoindex() const; // Return value: True || False
-        size_t getNum(std::string type) const; // Takes in the Listen and Client_body_size and retruns the value of int type
-        std::string getString(std::string type) const;
-        void setString(std::string type, std::string value);
-        void setNum(std::string type, size_t num);
-        std::map<int , std::string> getErrorPages() const;
-        void setErrorPage(std::map<int , std::string> error_pages);
-        void setAutoindex(bool value);
+        ServerConf(const ServerConf &copy);
+        ServerConf &operator=(const ServerConf &copy);
         std::vector<Location> location;
+        bool getAutoindex() const;
+        size_t getNum(std::string type) const;
+        std::vector<std::string> getMethods() const;
+        std::string getString(std::string type) const;
+        std::map<int , std::string> getErrorPages() const;
+        void setAutoindex(bool value);
+        void setNum(std::string type, size_t num);
+        void setString(std::string type, std::string value);
+        void setErrorPage(std::map<int , std::string> error_pages);
+        void setMethods(std::vector<std::string> methods);
 
 };
 
 class Location: public ServerConf {
     private:
-        std::string _locationName;
         std::string _returned;
-        std::vector<std::string> _methods;
+        std::string _compiler;
+        std::string _locationName;
     public:
         Location();
         ~Location();
+        std::string getReturned() const;
+        std::string getCompiler() const;
         std::string getLocationName() const;
-        std::vector<std::string> getMethods() const;
         void setReturned(std::string returned);
+        void setCompiler(std::string compiler);
         void setLocationName(std::string location_name);
-        void setMethods(std::vector<std::string> methods);
 };
 void parsefile(Config &config);

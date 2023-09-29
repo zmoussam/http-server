@@ -7,6 +7,8 @@ Parser::~Parser() {}
 bool Parser::look(std::string type) {
     if (index > tokens.size())
         return false;
+    if (index == tokens.size())
+        return false;
     return tokens[index]._type == type;
 }
 
@@ -19,15 +21,8 @@ Token Parser::match(std::string type) {
 
 bool checkQuotes(std::string &line)
 {
-    size_t count = 0;
-    for (size_t i = 0; i < line.size(); ++i) {
-        if (line[i] == '"') {
-            count++;
-        }
-    }
-    if (count % 2 != 0)
-        throw std::runtime_error(NOT_VALID);
-    return (count % 2 == 0);
+    size_t openQuote = std::count(line.begin(), line.end(), '"');
+    return(openQuote % 2 == 0);
 }
 
 size_t parseNum(std::string str) {
@@ -40,6 +35,8 @@ size_t parseNum(std::string str) {
         else
             throw std::runtime_error(NOT_VALID);
     }
+    if (number > INT_MAX)
+        throw std::runtime_error(BIG_NUMBER);
     return number;
 }
 
@@ -58,8 +55,8 @@ std::vector<std::string> splitArgs(std::string value)
     std::vector<std::string> args;
     size_t quoteStartPos = 0;
     size_t quoteEndPos = value.find('"', quoteStartPos + 1);
-    int count = std::count(value.begin(), value.end(), ',');
-    while (count >= 0)
+    size_t count = std::count(value.begin(), value.end(), ',');
+    while (true)
     {
         if (count == 0 && value.find(',', quoteEndPos + 1) != std::string::npos)
             throw std::runtime_error(NOT_VALID);
@@ -126,10 +123,9 @@ std::vector<std::string> Parser::parseMethods()
 
     args = splitArgs(match("value")._value);
     for (size_t i = 0; i < args.size(); i++) {
-        if (args[i] == "GET" || args[i] == "POST" || args[i] == "DELETE")
-            methods.push_back(args[i]);
-        else
+        if ((std::find(methods.begin(), methods.end(), args[i]) != methods.end() || (args[i] != "GET" && args[i] != "POST" && args[i] != "DELETE")))
             throw std::runtime_error(NOT_VALID);
+        methods.push_back(args[i]);
     }
     return methods;
 }
@@ -149,24 +145,31 @@ std::string Parser::parseStringRules(std::string key) {
 Location Parser::parseLocationBody()
 {
     Location location;
+    bool isCGI = false;
 
     location.setLocationName(parseValue(match("value")._value));
+    if (location.getLocationName()[0] == '*')
+        isCGI = true;
     match("{");
     while (!look("}")) {
         if (look("allow_methods"))
             location.setMethods(parseMethods());
         else if (look("root"))
             location.setString(ROOT, parseStringRules(ROOT));
-        else if (look("index"))
+        else if (look("index") && isCGI == false)
             location.setString(INDEX, parseStringRules(INDEX));
         else if (look("client_body_size"))
             location.setNum(BODY_SIZE, parseNumRules(BODY_SIZE));
-        else if (look("error_page"))
+        else if (look("error_page") && isCGI == false)
             location.setErrorPage(parseErrorPage());
-        else if (look("autoindex"))
+        else if (look("autoindex") && isCGI == false)
             location.setAutoindex(parseAutoindex());
-        else if ("return")
-            location.setString(REDIRECT, parseStringRules(REDIRECT));
+        else if (look("return"))
+            location.setReturned(parseStringRules(REDIRECT));
+        else if (look("compiler"))
+            location.setCompiler(parseStringRules(COMPILER));
+        else if (look("upload_path"))
+            location.setString(UPLOAD_PATH, parseUploadPath(parseStringRules(UPLOAD_PATH)));
         else
             throw std::runtime_error(UNEXPECTED_TOKEN);
     }
@@ -181,9 +184,16 @@ Location Parser::parseLocation() {
     return location;
 }
 
+std::string Parser::parseUploadPath(std::string value) {
+    if (value[0] != '/')
+        value = "/" + value;
+    if (value[value.size() - 1] != '/')
+        value += "/";
+    return value;
+}
+
 ServerConf Parser::parseServerBody() {
     ServerConf server;
-
     while (!look("}")) {
         if (look("listen"))
             server.setNum(LISTEN, parseNumRules(LISTEN)); 
@@ -201,6 +211,10 @@ ServerConf Parser::parseServerBody() {
             server.setErrorPage(parseErrorPage());
         else if (look("autoindex"))
             server.setAutoindex(parseAutoindex());
+        else if (look("allow_methods"))
+            server.setMethods(parseMethods());
+        else if (look("upload_path"))
+            server.setString(UPLOAD_PATH, parseUploadPath(parseStringRules(UPLOAD_PATH)));
         else if (look("location"))
             server.location.push_back(parseLocation());
         else
@@ -251,7 +265,9 @@ void   fillTokens(std::string line, Token tokens, std::vector<Token> &tokenArr)
     std::istringstream iss(line);
     std::string token;
     while (iss >> token) {
-        if (!token.empty() && (!token.compare("server") || !token.compare("{") || !token.compare("}") || !token.compare("location"))) {
+        if (token[0] == '#')
+            break;
+        else if (!token.empty() && (!token.compare("server") || !token.compare("{") || !token.compare("}") || !token.compare("location"))) {
             tokens._type = token;
             tokens._value = token;
         }
@@ -260,7 +276,7 @@ void   fillTokens(std::string line, Token tokens, std::vector<Token> &tokenArr)
             tokens._type = parseKey(token);
             tokens._value = token;
         }
-        else if (!token.empty() && token[0] == '"')
+        else if (!token.empty() && token[0] == '"' && checkQuotes(token))
         {
             tokens._type = "value";
             tokens._value = token;
@@ -295,15 +311,18 @@ void Parser::parseToken(Config &config)
     try {
         Tokenizer(this->tokens, config._file);
         parseConfig(config);
-        // for (size_t i = 0; i < config._servers.size(); i++) {
-        //     std::cout << "listen: " << config._servers[i].getNum(LISTEN) << std::endl;
-        //     std::cout << "host: " << config._servers[i].getString(HOST) << std::endl;
-        //     std::cout << "server_name: " << config._servers[i].getString(SERVER_NAME) << std::endl;
-        //     for (size_t j = 0; j < config._servers[i].location.size(); j++) {
-        //         std::cout << "location: " << config._servers[i].location[j].getLocationName() << std::endl;
-        //         std::cout << "root: " << config._servers[i].location[j].getString(ROOT) << std::endl;
-        //     }
-        // }
+        while (config._servers.size() > 1) {
+            for (size_t i = 0; i < config._servers.size() - 1; i++) {
+                for (size_t j = i + 1; j < config._servers.size(); j++) {
+                    if (config._servers[i].getNum(LISTEN) == config._servers[j].getNum(LISTEN) && config._servers[i].getString(SERVER_NAME) == config._servers[j].getString(SERVER_NAME))
+                        throw std::runtime_error("ERROR: SAME_SERVER");
+                }
+            }
+            break;
+        }   
+        for (size_t i = 0; i < config._servers.size(); i++) {
+            config._serversByPort[config._servers[i].getNum(LISTEN)].push_back(config._servers[i]);
+        }
     } catch (std::exception &e) {
         std::cout << e.what() << std::endl;
         exit(1);

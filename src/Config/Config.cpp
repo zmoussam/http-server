@@ -10,17 +10,80 @@ ServerConf::ServerConf() {
     this->_autoindex = false;
     this->_bodySize = 100000;
     this->_host = "127.0.0.1";
+    this->_serverName = "";
+    this->_listen = 8000;
+    this->_root = "";
+    this->_index = "";
+    this->_uploadPath = "upload/";
+    this->_errorPages = std::map<int , std::string>();
+    this->_methods = std::vector<std::string>();
 }
 ServerConf::~ServerConf() {}
-Location::Location() {}
+Location::Location() {
+    this->_locationName = "";
+    this->_returned = "";
+    this->_compiler = "";
+}
 Location::~Location() {}
 
-void Location::setMethods(std::vector<std::string> methods)
+ServerConf::ServerConf(const ServerConf &copy)
+{
+    this->_autoindex = copy._autoindex;
+    this->_bodySize = copy._bodySize;
+    this->_host = copy._host;
+    this->_serverName = copy._serverName;
+    this->_listen = copy._listen;
+    this->_root = copy._root;
+    this->_index = copy._index;
+    this->_errorPages = copy._errorPages;
+    this->location = copy.location;
+    this->_methods = copy._methods;
+    this->_uploadPath = copy._uploadPath;
+}
+
+ServerConf &ServerConf::operator=(const ServerConf &copy)
+{
+    this->_autoindex = copy._autoindex;
+    this->_bodySize = copy._bodySize;
+    this->_host = copy._host;
+    this->_serverName = copy._serverName;
+    this->_listen = copy._listen;
+    this->_root = copy._root;
+    this->_index = copy._index;
+    this->_errorPages = copy._errorPages;
+    this->location = copy.location;
+    this->_methods = copy._methods;
+    this->_uploadPath = copy._uploadPath;
+    return *this;
+}
+
+void Location::setReturned(std::string returned)
+{
+    this->_returned = returned;
+}
+
+void Location::setCompiler(std::string compiler)
+{
+    this->_compiler = compiler + " ";
+}
+
+std::string Location::getCompiler() const
+{
+    return this->_compiler;
+}
+
+std::string Location::getReturned() const
+{
+    return this->_returned;
+}
+
+
+void ServerConf::setMethods(std::vector<std::string> methods)
 {
     this->_methods = methods;
 }
 
-std::vector<std::string> Location::getMethods() const
+std::vector<std::string> ServerConf::getMethods() const
 {
     return this->_methods;
 }
@@ -52,7 +115,6 @@ std::map<int , std::string> ServerConf::getErrorPages() const {
     return this->_errorPages;
 }
 
-
 void ServerConf::setString(std::string type, std::string value)
 {
     if (type == "server_name")
@@ -63,6 +125,8 @@ void ServerConf::setString(std::string type, std::string value)
         this->_root = value;
     else if (type == "index")
         this->_index = value;
+    else if (type == "upload_path")
+        this->_uploadPath = value;
 }
 
 void ServerConf::setNum(std::string type, size_t value)
@@ -83,6 +147,15 @@ std::string ServerConf::getString(std::string type) const
         return this->_root;
     else if (type == "index")
         return this->_index;
+    else if (type == "upload_path")
+    {
+        if (this->_root[this->_root.length() - 1] != '/' && this->_uploadPath[0] != '/')
+            return (this->_root + "/" + this->_uploadPath);
+        else if (this->_root[this->_root.length() - 1] == '/' && this->_uploadPath[0] == '/')
+            return (this->_root + this->_uploadPath.substr(1));
+        else  
+            return (this->_root + this->_uploadPath);
+    }
     return "";
 }
 
