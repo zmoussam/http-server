@@ -4,16 +4,6 @@
 
 A recreation of Nginx and Apache webservers in C++
 
-## TODO
-
-- [x] Add I/O Multiplexing
-- [x] HTTP Request Parsing
-- [ ] HTTP Response Generation
-- [ ] GET, POST, DELETE methods support
-- [ ] [Evaluation tests](https://htmlpreview.github.io/?https://github.com/rphlr/42-Evals/blob/main/Rank05/webserv/index.html)
-
-
-
 ## Commit Message Convention
 
 We use a commit message convention to ensure clear and meaningful communication about the changes made in each commit. When making commits, please follow the naming convention below:
